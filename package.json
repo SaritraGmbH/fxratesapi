@@ -4,7 +4,7 @@
   "description": "An API wrapper around fxratesapi.com",
   "main": "src/index.js",
   "scripts": {
-    "test": "NODE_ENV=test mocha",
+    "test": " mocha",
     "docs": "./node_modules/jsdoc/jsdoc.js -c ./.jsdoc.conf.json"
   },
   "author": "SaritraGmbH",

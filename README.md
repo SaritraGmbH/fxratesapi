@@ -26,71 +26,75 @@ Once you [have installed the npm package](#-installation) you can start using it
 ### Latest & specific date rates
 
 ```javascript
-const { exchangeRates } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = new fxRatesAPI('apikey'); // api key is not required
 
 (async () => {
     // Get the latest exchange rates
-    await exchangeRates().latest().fetch();                             // {THB: 34.978, PHP: 58.159, …, HUF: 323.58}
+    await fx.latest().fetch();                             // {THB: 34.978, PHP: 58.159, …, HUF: 323.58}
 
     // Get historical rates for any day since 1999
-    await exchangeRates().at('2018-03-26').fetch();                     // {THB: 38.66, PHP: 64.82, …, HUF: 312.73}
+    await fx.at('2018-03-26').fetch();                     // {THB: 38.66, PHP: 64.82, …, HUF: 312.73}
 
     // By default, the base currency is EUR, but it can be changed
-    await exchangeRates().latest().base('USD').fetch();                 // {THB: 30.9348191386, …, HUF: 286.1767046962}
+    await fx.latest().base('USD').fetch();                 // {THB: 30.9348191386, …, HUF: 286.1767046962}
 
     // Request specific exchange rates
-    await exchangeRates().latest().symbols(['USD', 'GBP']).fetch();     // {USD: 1.1307, GBP: 0.89155}
+    await fx.latest().symbols(['USD', 'GBP']).fetch();     // {USD: 1.1307, GBP: 0.89155}
 
     // Request one specific exchange rate
-    await exchangeRates().latest().symbols('USD').fetch();              // 1.1307
+    await fx.latest().symbols('USD').fetch();              // 1.1307
 })();
 ```
 
 ### Rates history
 
 ```javascript
-const { exchangeRates } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = () => new fxRatesAPI("apikey"); // api key is not required
 
 (async () => {
     // Get historical rates for a time period
-    await exchangeRates().from('2018-01-01').to('2018-09-01').fetch();
+    await fx().from('2018-01-01').to('2018-09-01').fetch();
     // outputs: { '2018-02-28': { THB: 38.613, …, HUF: 313.97 }, …, { '2018-06-07': { … } } }
 
     // Limit results to specific exchange rates to save bandwidth
-    await exchangeRates()
+    await fx()
         .from('2018-01-01').to('2018-09-01')
         .symbols(['ILS', 'JPY'])
         .fetch();
 
     // Quote the historical rates against a different currency
-    await exchangeRates().from('2018-01-01').to('2018-09-01').base('USD');
+    await fx().from('2018-01-01').to('2018-09-01').base('USD');
 })();
 ```
 
 ### Different ways to pass a date
 
 ```javascript
-const { exchangeRates } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = () => new fxRatesAPI("apikey"); // api key is not required
 
 (async () => {
     // Pass an YYYY-MM-DD (ISO 8601) string
-    await exchangeRates().at('2018-09-01').fetch();
+    await fx().at('2018-09-01').fetch();
 
     // Pass another string
-    await exchangeRates().at('September 1, 2018').fetch();
+    await fx().at('September 1, 2018').fetch();
 
     // Pass a Date object
-    await exchangeRates().at(new Date(2019, 8, 1)).fetch();
+    await fx().at(new Date(2019, 8, 1)).fetch();
 })();
 ```
 
 ### Currencies object
 
 ```javascript
-const { exchangeRates, currencies } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = new fxRatesAPI('apikey'); // api key is not required
 
 (async () => {
-    await exchangeRates().latest()
+    await fx().latest()
         .base(currencies.USD)
         .symbols([currencies.EUR, currencies.GBP])
         .fetch();
@@ -100,17 +104,18 @@ const { exchangeRates, currencies } = require('fxratesapi');
 ### Average rate for a specific time period
 
 ```javascript
-const { exchangeRates } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = () => new fxRatesAPI("apikey"); // api key is not required
 
 (async () => {
     // Find the average exchange rate for January, 2018
-    await exchangeRates()
+    await fx()
         .from('2018-01-01').to('2018-01-31')
         .base('USD').symbols('EUR')
         .avg();     // 0.8356980613403501
 
     // Set the number of decimal places
-    await exchangeRates()
+    await fx()
         .from('2018-01-01').to('2018-01-31')
         .base('USD').symbols(['EUR', 'GBP'])
         .avg(2);    // { EUR: 0.84, GBP: 0.74 }
@@ -120,10 +125,11 @@ const { exchangeRates } = require('fxratesapi');
 ### Convert
 
 ```javascript
-const { convert } = require('fxratesapi');
+conconst fxRatesAPI  = require("fxratesapi");
+const fx = () => new fxRatesAPI("apikey"); // api key is not required
 
 (async () => {
-    let amount = await convert(2000, 'USD', 'EUR', '2018-01-01');
+    let amount = await fx().convert(2000, 'USD', 'EUR', '2018-01-01');
     console.log(amount);    // 1667.6394564000002
 })();
 ```
@@ -131,23 +137,25 @@ const { convert } = require('fxratesapi');
 ### API URL
 
 ```javascript
-const { exchangeRates } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = () => new fxRatesAPI("apikey"); // api key is not required
 
 // Grab the url we're going to request
-let url = exchangeRates()
+let url = fx()
     .from('2018-01-01').to('2018-09-01')
     .base('USD').symbols(['EUR', 'GBP'])
     .url;
 
 console.log(url);
-// https://api.fxratesapi.com/history?start_at=2018-01-01&end_at=2018-09-01&base=USD&symbols=EUR,GBP
+// https://api.fxratesapi.com/historical?start_at=2018-01-01&end_at=2018-09-01&base=USD&symbols=EUR,GBP
 ```
 
 
 ### Error handling
 
 ```javascript
-const { exchangeRates } = require('fxratesapi');
+const fxRatesAPI  = require("fxratesapi");
+const fx = () => new fxRatesAPI("apikey"); // api key is not required
 
 /* `ExchangeRatesError` and `TypeError` are explicitly thrown
  * sometimes, so you might want to handle them */
@@ -157,14 +165,14 @@ const { exchangeRates } = require('fxratesapi');
     try {
         /* This will throw an `ExchangeRateError` with the error
          * message 'Cannot get historical rates before 1999' */
-        let rates = await exchangeRates().at('1990-01-01').fetch();
+        let rates = await fx().at('1990-01-01').fetch();
     } catch (error) {
         // Handle the error
     }
 })();
 
 // Promises syntax
-exchangeRates().at('1990-01-01').fetch()
+fx().at('1990-01-01').fetch()
     .then(rates => {})
     .catch(error => {
         // Handle the error
@@ -175,39 +183,193 @@ exchangeRates().at('1990-01-01').fetch()
 
 The library supports any currency currently available on the European Central Bank's web service, which at the time of the latest release are as follows:
 
-- Australian Dollar (AUD)
-- Brazilian Real (BRL)
-- British Pound Sterline (GBP)
-- Bulgarian Lev (BGN)
-- Canadian Dollar (CAD)
-- Chinese Yuan Renminbi (CNY)
-- Croatian Kuna (HRK)
-- Czech Koruna (CZK)
-- Danish Krone (DKK)
-- Euro (EUR)
-- Hong Kong Dollar (HKD)
-- Hungarian Forint (HUF)
-- Icelandic Krona (ISK)
-- Indonesian Rupiah (IDR)
-- Indian Rupee (INR)
-- Israeli Shekel (ILS)
-- Japanese Yen (JPY)
-- Malaysian Ringgit (MYR)
-- Mexican Peso (MXN)
-- New Zealand Dollar (NZD)
-- Norwegian Krone (NOK)
-- Philippine Peso (PHP)
-- Polish Zloty (PLN)
-- Romanian Leu (RON)
-- Russian Rouble (RUB)
-- Singapore Dollar (SGD)
-- South African Rand (ZAR)
-- South Korean Won (KRW)
-- Swedish Krona (SEK)
-- Swiss Franc (CHF)
-- Thai Baht (THB)
-- Turkish Lira (TRY)
-- US Dollar (USD)
+| CODE  | NAME                                | SYMBOL |
+|-------|-------------------------------------|--------|
+| AFN   | Afghan Afghani                      | Af     |
+| ALL   | Albanian Lek                        | ALL    |
+| AMD   | Armenian Dram                       | AMD    |
+| ANG   | NL Antillean Guilder                | ƒ      |
+| AOA   | Angolan Kwanza                      | Kz     |
+| ARS   | Argentine Peso                      | AR$    |
+| AUD   | Australian Dollar                   | AU$    |
+| AWG   | Aruban Florin                       | Afl.   |
+| AZN   | Azerbaijani Manat                   | man.   |
+| BAM   | Bosnia-Herzegovina Convertible Mark | KM     |
+| BBD   | Barbadian Dollar                    | Bds$   |
+| BDT   | Bangladeshi Taka                    | Tk     |
+| BGN   | Bulgarian Lev                       | BGN    |
+| BHD   | Bahraini Dinar                      | BD     |
+| BIF   | Burundian Franc                     | FBu    |
+| BMD   | Bermudan Dollar                     | BD$    |
+| BND   | Brunei Dollar                       | BN$    |
+| BOB   | Bolivian Boliviano                  | Bs     |
+| BRL   | Brazilian Real                      | R$     |
+| BSD   | Bahamian Dollar                     | B$     |
+| BWP   | Botswanan Pula                      | BWP    |
+| BYN   | Belarusian ruble                    | Br     |
+| BYR   | Belarusian Ruble                    | BYR    |
+| BZD   | Belize Dollar                       | BZ$    |
+| CAD   | Canadian Dollar                     | CA$    |
+| CDF   | Congolese Franc                     | CDF    |
+| CHF   | Swiss Franc                         | CHF    |
+| CLF   | Unidad de Fomento                   | UF     |
+| CLP   | Chilean Peso                        | CL$    |
+| CNY   | Chinese Yuan                        | CN¥    |
+| COP   | Coombian Peso                       | CO$    |
+| CRC   | Costa Rican Colón                   | ₡      |
+| CUC   | Cuban Convertible Peso              | CUC$   |
+| CUP   | Cuban Peso                          | $MN    |
+| CVE   | Cape Verdean Escudo                 | CV$    |
+| CZK   | Czech Republic Koruna               | Kč     |
+| DJF   | Djiboutian Franc                    | Fdj    |
+| DKK   | Danish Krone                        | Dkr    |
+| DOP   | Dominican Peso                      | RD$    |
+| DZD   | Algerian Dinar                      | DA     |
+| ERN   | Eritrean Nakfa                      | Nfk    |
+| ETB   | Ethiopian Birr                      | Br     |
+| EUR   | Euro                                | €      |
+| FJD   | Fijian Dollar                       | FJ$    |
+| FKP   | Falkland Islands Pound              | FK£    |
+| GBP   | British Pound Sterling              | £      |
+| GEL   | Georgian Lari                       | GEL    |
+| GGP   | Guernsey pound                      | £      |
+| GHS   | Ghanaian Cedi                       | GH₵    |
+| GIP   | Gibraltar Pound                     | £      |
+| GMD   | Gambian Dalasi                      | D      |
+| GNF   | Guinean Franc                       | FG     |
+| GTQ   | Guatemalan Quetzal                  | GTQ    |
+| GYD   | Guyanaese Dollar                    | G$     |
+| HKD   | Hong Kong Dollar                    | HK$    |
+| HNL   | Honduran Lempira                    | HNL    |
+| HRK   | Croatian Kuna                       | kn     |
+| HTG   | Haitian Gourde                      | G      |
+| HUF   | Hungarian Forint                    | Ft     |
+| IDR   | Indonesian Rupiah                   | Rp     |
+| ILS   | Israeli New Sheqel                  | ₪      |
+| IMP   | Manx pound                          | £      |
+| IQD   | Iraqi Dinar                         | IQD    |
+| IRR   | Iranian Rial                        | IRR    |
+| ISK   | Icelandic Króna                     | Ikr    |
+| JEP   | Jersey pound                        | £      |
+| JMD   | Jamaican Dollar                     | J$     |
+| JOD   | Jordanian Dinar                     | JD     |
+| JPY   | Japanese Yen                        | ¥      |
+| KES   | Kenyan Shilling                     | Ksh    |
+| KGS   | Kyrgystani Som                      | KGS    |
+| KHR   | Cambodian Riel                      | KHR    |
+| KMF   | Comorian Franc                      | CF     |
+| KPW   | North Korean Won                    | ₩      |
+| KRW   | South Korean Won                    | ₩      |
+| KWD   | Kuwaiti Dinar                       | KD     |
+| KYD   | Cayman Islands Dollar               | CI$    |
+| KZT   | Kazakhstani Tenge                   | KZT    |
+| LAK   | Laotian Kip                         | ₭N     |
+| LBP   | Lebanese Pound                      | LB£    |
+| LKR   | Sri Lankan Rupee                    | SLRs   |
+| LRD   | Liberian Dollar                     | LD$    |
+| LSL   | Lesotho Loti                        | L      |
+| LTL   | Lithuanian Litas                    | Lt     |
+| LVL   | Latvian Lats                        | Ls     |
+| MAD   | Moroccan Dirham                     | MAD    |
+| MDL   | Moldovan Leu                        | MDL    |
+| XAG   | Silver Ounce                        | XAG    |
+| XAU   | Gold Ounce                          | XAU    |
+| XCD   | East Caribbean Dollar               | EC$    |
+| XDR   | Special drawing rights              | SDR    |
+| XOF   | CFA Franc BCEAO                     | CFA    |
+| XPF   | CFP Franc                           | CFP    |
+| YER   | Yemeni Rial                         | YR     |
+| ZAR   | South African Rand                  | R      |
+| ZMK   | Zambian Kwacha                      | ZK     |
+| ZMW   | Zambian Kwacha                      | ZK     |
+| ZWL   | Zimbabwean dollar                   | ZWL    |
+| XPT   | Platinum Ounce                      | XPT    |
+| XPD   | Palladium Ounce                     | XPD    |
+| BTC   | Bitcoin                             | ₿      |
+| ETH   | Ethereum                            | Ξ      |
+| BNB   | Binance                             | BNB    |
+| XRP   | Ripple                              | XRP    |
+| SOL   | Solana                              | SOL    |
+| DOT   | Polkadot                            | DOT    |
+| AVAX  | Avalanche                           | AVAX   |
+| MATIC | Matic Token                         | MATIC  |
+| LTC   | Litecoin                            | Ł      |
+| ADA   | Cardano                             | ADA    |
+| USDT  | Tether                              | USDT   |
+| USDC  | USD Coin                            | USDC   |
+| DAI   | Dai                                 | DAI    |
+| BUSD  | Binance USD                         | BUSD   |
+| ARB   | Arbitrum                            | ARB    |
+| OP    | Optimism                            | OP     |
+| AED   | United Arab Emirates Dirham         | AED    |
+| BTN   | Bhutanese Ngultrum                  | Nu.    |
+| MKD   | Macedonian Denar                    | MKD    |
+| MMK   | Myanma Kyat                         | MMK    |
+| MNT   | Mongolian Tugrik                    | ₮      |
+| MOP   | Macanese Pataca                     | MOP$   |
+| MRO   | Mauritanian ouguiya                 | UM     |
+| MUR   | Mauritian Rupee                     | MURs   |
+| MVR   | Maldivian Rufiyaa                   | MRf    |
+| MWK   | Malawian Kwacha                     | MK     |
+| MXN   | Mexican Peso                        | MX$    |
+| MZN   | Mozambican Metical                  | MTn    |
+| NAD   | Namibian Dollar                     | N$     |
+| NGN   | Nigerian Naira                      | ₦      |
+| NIO   | Nicaraguan Córdoba                  | C$     |
+| NOK   | Norwegian Krone                     | Nkr    |
+| NPR   | Nepalese Rupee                      | NPRs   |
+| NZD   | New Zealand Dollar                  | NZ$    |
+| OMR   | Omani Rial                          | OMR    |
+| PAB   | Panamanian Balboa                   | B/.    |
+| PEN   | Peruvian Nuevo Sol                  | S/.    |
+| PGK   | Papua New Guinean Kina              | K      |
+| PHP   | Philippine Peso                     | ₱      |
+| PKR   | Pakistani Rupee                     | PKRs   |
+| PLN   | Polish Zloty                        | zł     |
+| PYG   | Paraguayan Guarani                  | ₲      |
+| QAR   | Qatari Rial                         | QR     |
+| RON   | Romanian Leu                        | RON    |
+| RSD   | Serbian Dinar                       | din.   |
+| RUB   | Russian Ruble                       | RUB    |
+| RWF   | Rwandan Franc                       | RWF    |
+| SAR   | Saudi Riyal                         | SR     |
+| SCR   | Seychellois Rupee                   | SRe    |
+| SDG   | Sudanese Pound                      | SDG    |
+| SEK   | Swedish Krona                       | Skr    |
+| SGD   | Singapore Dollar                    | S$     |
+| SHP   | Saint Helena Pound                  | £      |
+| SLL   | Sierra Leonean Leone                | Le     |
+| SOS   | Somali Shilling                     | Ssh    |
+| SRD   | Surinamese Dollar                   | $      |
+| STD   | São Tomé and Príncipe dobra         | Db     |
+| SVC   | Salvadoran Colón                    | ₡      |
+| SYP   | Syrian Pound                        | SY£    |
+| SZL   | Swazi Lilangeni                     | L      |
+| THB   | Thai Baht                           | ฿      |
+| TJS   | Tajikistani Somoni                  | TJS    |
+| TMT   | Turkmenistani Manat                 | T      |
+| TND   | Tunisian Dinar                      | DT     |
+| TOP   | Tongan Paʻanga                      | T$     |
+| TRY   | Turkish Lira                        | TL     |
+| TTD   | Trinidad and Tobago Dollar          | TT$    |
+| TWD   | New Taiwan Dollar                   | NT$    |
+| TZS   | Tanzanian Shilling                  | TSh    |
+| UAH   | Ukrainian Hryvnia                   | ₴      |
+| UGX   | Ugandan Shilling                    | USh    |
+| USD   | US Dollar                           | $      |
+| UYU   | Uruguayan Peso                      | $U     |
+| VEF   | Venezuelan Bolívar                  | Bs.F.  |
+| VND   | Vietnamese Dong                     | ₫      |
+| VUV   | Vanuatu Vatu                        | VUV    |
+| WST   | Samoan Tala                         | WS$    |
+| XAF   | CFA Franc BEAC                      | FCFA   |
+| EGP   | Egyptian Pound                      | EGP    |
+| INR   | Indian Rupee                        | Rs     |
+| LYD   | Libyan Dinar                        | LD     |
+| MGA   | Malagasy Ariary                     | MGA    |
+| MYR   | Malaysian Ringgit                   | RM     |
+| SBD   | Solomon Islands Dollar              | SI$    |
+| UZS   | Uzbekistan Som                      | UZS    |
 
 
 **Development dependencies**

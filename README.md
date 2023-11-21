@@ -1,6 +1,6 @@
 # Exchange Rates
 
-💰🌍 An unofficial [node.js](https://nodejs.org/) wrapper for the awesome and free [fxratesapi.com](https://fxratesapi.com/), which provides exchange rate lookups for over 175 globval currencies updated every minute.
+💰🌍 An unofficial [node.js](https://nodejs.org/) wrapper for the awesome and free [fxratesapi.com](https://fxratesapi.com/), which provides exchange rate lookups for over 175 global currencies updated every minute.
 
 ## Table of Contents
 

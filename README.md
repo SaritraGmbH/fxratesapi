@@ -7,9 +7,6 @@
 * [Installation](#-installation)
 * [Usage](#-usage)
 * [Supported Currencies](#-supported-currencies)
-* [Bugs & Features](#-bugs-features)
-* [Documentation](#-documentation)
-* [Unit Testing](#-unit-testing)
 * [Dependencies](#-dependencies)
 * [License](#-license)
 
@@ -19,9 +16,14 @@
 $ npm i fxratesapi
 ```
 
-## ⌨️ Usage
+## ⌨️ Usage & Authentication
 
 Once you [have installed the npm package](#-installation) you can start using it immediately. [fxRatesAPI](https://fxratesapi.com/) does **not** require you to sign up, generate API keys etc.
+
+However, if you want to use the [convert](#convert) method, you need to [sign up](https://fxratesapi.com/signup) for a free account and get an API key. The API key is not required for the other methods. You are also subject to lower rate limits if you don't use an API key.
+
+
+## 📡 Endpoints
 
 ### Latest & specific date rates
 
@@ -181,7 +183,9 @@ fx().at('1990-01-01').fetch()
 
 ## 💰 Supported Currencies
 
-The library supports any currency currently available on the European Central Bank's web service, which at the time of the latest release are as follows:
+This list has been last updated on 22. November 2023. For the latest list, please check the [currency list](https://fxratesapi.com/docs/currency-list) on the fxratesapi website.
+
+The library supports all **184** currencies listed on the [fxratesapi](https://fxratesapi.com/) website. The following table lists all supported currencies, their currency codes, and their symbols:
 
 | CODE  | NAME                                | SYMBOL |
 |-------|-------------------------------------|--------|
@@ -371,17 +375,15 @@ The library supports any currency currently available on the European Central Ba
 | SBD   | Solomon Islands Dollar              | SI$    |
 | UZS   | Uzbekistan Som                      | UZS    |
 
+## 🗄 Dependencies
+
+* [date-fns](https://www.npmjs.com/package/date-fns) — Modern JavaScript date utility library
+* [isomorphic-fetch](https://www.npmjs.com/package/isomorphic-fetch) — Isomorphic WHATWG Fetch API, for Node & Browserify
 
 **Development dependencies**
 
 * [Chai](https://www.chaijs.com/) — a BDD / TDD assertion library for node and the browser
 * [Mocha](https://mochajs.org/) — a feature-rich JavaScript test framework running on Node.js and in the browser
-* [fetch-mock](http://www.wheresrhys.co.uk/fetch-mock/) — allows mocking http requests made using fetch or a library imitating its api, such as node-fetch or fetch-ponyfill
-
-## 🗄 Dependencies
-
-* [date-fns](https://www.npmjs.com/package/date-fns) — Modern JavaScript date utility library
-* [isomorphic-fetch](https://www.npmjs.com/package/isomorphic-fetch) — Isomorphic WHATWG Fetch API, for Node & Browserify
 
 ## 📖 License
 

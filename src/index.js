@@ -1,13 +1,5 @@
-/**
- * An API wrapper around api.fxratesapi.com
- *
- * @module exchange-rate-api
- * @author saritra-gmbh
- */
-
-require("isomorphic-fetch");
+const fetch = require("isomorphic-fetch");
 const { getYear, isAfter } = require("date-fns");
-
 const ExchangeRatesError = require("./exchange-rates-error");
 const QueryStringBuilder = require("./query-string-builder");
 const currenciesList = require("./currencies");
@@ -15,159 +7,154 @@ const utils = require("./utils");
 
 const API_BASE_URL = "https://api.fxratesapi.com";
 
-/**
- * ExchangeRates
- */
 class ExchangeRates {
-  constructor(apiKey = "") {
-    // check if an api key is passed as paramenter and set it
-    if (apiKey) {
-      this._api_key = apiKey;
-    } else {
-      // check if an api key is set as environment variable and set it
-      if (process.env.FX_RATES_API_KEY) {
-        this._api_key = process.env.FX_RATES_API_KEY;
-      }
-    }
+  _apiBaseUrl = API_BASE_URL;
+  _apiKey = null;
+  _endpoint = "latest";
+  _base = null;
+  _symbols = null;
+  _amount = null;
+  _places = null;
+  _format = null;
+  _date = null;
+  _startDate = null;
+  _endDate = null;
+  _accuracy = null;
+  _resolution = null;
 
-    // API base url
-    this._api_base_url = API_BASE_URL;
-
-    // Base currency, defaults to 'EUR'
-    this._base = null;
-
-    // Exchange rates to fetch
-    this._symbols = null;
-
-    // Date from which to request historical rates
-    this._from = "latest";
-
-    // Date to which to request historical rates
-    this._to = null;
+  constructor(apiKey = process.env.FX_RATES_API_KEY || "") {
+    this._apiKey = apiKey;
   }
 
-  /**
-   * Throw an error if the given currency is not supported
-   *
-   * @throws {ExchangeRatesError}     Will throw an error if the given currency
-   *                                  doesn't exist in the `currenciesList` object
-   */
   _validateCurrency(currency) {
     if (!(currency in currenciesList)) {
       throw new ExchangeRatesError(`${currency} is not a valid currency`);
     }
   }
 
-  /**
-   * Determine whether this request should call the /history endpoint or not
-   *
-   * @return {boolean}                Whether this a history request or not
-   */
   _isHistoryRequest() {
-    return this._to !== null;
+    return this._endpoint === "historical" || this._endpoint === "timeseries";
   }
 
-  /**
-   * Throw an error if any of our validations fails
-   *
-   * @throws {ExchangeRatesError}     Will throw an error if any validation fails
-   */
   _validate() {
-    if (this._isHistoryRequest()) {
-      if (this._from === "latest") {
+    if (this._endpoint == "timeseries") {
+      if (
+        this._startDate &&
+        this._endDate &&
+        isAfter(this._startDate, this._endDate)
+      ) {
         throw new ExchangeRatesError(
-          "Cannot set the 'from' date to 'latest' when fetching a date range"
+          "The 'start_date' cannot be after the 'end_date'"
         );
       }
-      if (isAfter(this._from, this._to)) {
+
+      if (this._startDate !== null && getYear(this._startDate) < 1999) {
+        throw new ExchangeRatesError("Cannot get historical rates before 1999");
+      }
+    }
+
+    if (this._endpoint === "convert") {
+      if (this._amount === null) {
         throw new ExchangeRatesError(
-          "The 'from' date cannot be after the 'to' date"
+          "The 'amount' parameter is required for the convert endpoint"
         );
       }
     }
 
-    if (this._from !== "latest" && getYear(this._from) < 1999) {
-      throw new ExchangeRatesError("Cannot get historical rates before 1999");
+    if (this._endpoint === "historical") {
+      if (this._date === null) {
+        throw new ExchangeRatesError(
+          "The 'date' parameter is required for the historical endpoint"
+        );
+      }
+
+      if (getYear(this._date) < 1999) {
+        throw new ExchangeRatesError("Cannot get historical rates before 1999");
+      }
     }
   }
 
-  /**
-   * Build and return the url to request
-   *
-   * @return {string}                 The url to request
-   */
   _buildUrl() {
-    let url = `${this._api_base_url}/`;
+    let url = `${this._apiBaseUrl}/${this._endpoint}`;
     const qs = new QueryStringBuilder();
 
-    if (this._isHistoryRequest()) {
-      url += "historical";
-      qs.addParam("start_at", utils.formatDate(this._from));
-      qs.addParam("end_at", utils.formatDate(this._to));
-    } else {
-      url += this._from === "latest" ? "latest" : utils.formatDate(this._from);
+    if (this._endpoint == "timeseries") {
+      if (this._startDate)
+        qs.addParam("start_date", utils.formatDate(this._startDate));
+      if (this._endDate)
+        qs.addParam("end_date", utils.formatDate(this._endDate));
+      if (this._accuracy) qs.addParam("accuracy", this._accuracy);
     }
 
-    if (this._base) {
-      qs.addParam("base", this._base);
+    if (this._endpoint === "convert") {
+      if (this._amount) qs.addParam("amount", this._amount);
     }
 
-    if (this._symbols) {
-      qs.addParam("symbols", this._symbols.join(","), false);
+    if (this._endpoint === "historical") {
+      if (this._date) qs.addParam("date", utils.formatDate(this._date));
     }
+
+    if (this._endpoint === "latest") {
+      if (this._resolution) qs.addParam("resolution", this._resolution);
+    }
+
+    if (this._base) qs.addParam("base", this._base);
+    if (this._symbols)
+      qs.addParam("currencies", this._symbols.join(","), false);
+    if (this._amount) qs.addParam("amount", this._amount);
+    if (this._places) qs.addParam("places", this._places);
+    if (this._format) qs.addParam("format", this._format);
+
+    if (this._apiKey) qs.addParam("api_key", this._apiKey);
+
+    qs.addParam("p", "nodejs");
 
     return url + qs;
   }
 
-  /**
-   * Set the date to get historical rates for that specific day
-   *
-   * @param {Date} date               The date to request its historical rates
-   * @return {ExchangeRates}          The instance on which this method was called
-   */
   at(date) {
-    this._from = utils.parseDate(date);
-    return this; // chainable
+    this._date = utils.parseDate(date);
+    this._endpoint = "historical";
+    return this;
   }
 
-  /**
-   * Set the date to get the latest exchange rates
-   *
-   * @return {ExchangeRates}          The instance on which this method was called
-   */
-  latest() {
-    this._from = "latest";
-    return this; // chainable
-  }
-
-  /**
-   * Set the date from which to request historical rates
-   *
-   * @param {Date} date               The date from which to request historical rates
-   * @return {ExchangeRates}          The instance on which this method was called
-   */
   from(date) {
-    this._from = utils.parseDate(date);
-    return this; // chainable
+    this._startDate = utils.parseDate(date);
+    this._endpoint = "timeseries";
+    return this;
   }
 
-  /**
-   * Set the date to which to request historical rates
-   *
-   * @param {Date} date               The date to which to request historical rates
-   * @return {ExchangeRates}          The instance on which this method was called
-   */
   to(date) {
-    this._to = utils.parseDate(date);
-    return this; // chainable
+    this._endDate = utils.parseDate(date);
+    this._endpoint = "timeseries";
+    return this;
   }
 
-  /**
-   * Set the base currency (if not explicitly set, it defaults to 'EUR')
-   *
-   * @param {string} currency         The base currency
-   * @return {ExchangeRates}          The instance on which this method was called
-   */
+  accuracy(value) {
+    this._accuracy = value;
+    return this;
+  }
+
+  resolution(value) {
+    this._resolution = value;
+    return this;
+  }
+
+  amount(value) {
+    this._amount = value;
+    return this;
+  }
+
+  places(value) {
+    this._places = value;
+    return this;
+  }
+
+  format(value) {
+    this._format = value;
+    return this;
+  }
+
   base(currency) {
     if (typeof currency !== "string") {
       throw new TypeError("Base currency has to be a string");
@@ -177,15 +164,9 @@ class ExchangeRates {
     this._validateCurrency(currencyUpper);
 
     this._base = currencyUpper;
-    return this; // chainable
+    return this;
   }
 
-  /**
-   * Set symbols to limit results to specific exchange rate(s)
-   *
-   * @param {string|string[]} currencies      The currency (or an array of currencies)
-   * @return {ExchangeRates}                  The instance on which this method was called
-   */
   symbols(currencies) {
     const currenciesArray = Array.isArray(currencies)
       ? currencies
@@ -205,93 +186,67 @@ class ExchangeRates {
     }
 
     this._symbols = currenciesArray;
-    return this; // chainable
+    return this;
   }
 
-  /**
-   * The API url to request
-   * @type {string}
-   */
-  get url() {
+  url() {
     this._validate();
     return this._buildUrl();
   }
 
-  /**
-   * Fetch the exchange rates from api.ratesapi.io, parse the response and return it
-   *
-   * @return {Promise<object|number>}     A Promise that when resolved, returns either an
-   *                                      object containing the exchange rates, or a number
-   *                                      if the response contains a single exchange rate
-   */
-  fetch() {
-    this._validate();
+  async fetch() {
+    try {
+      const response = await fetch(this._buildUrl());
 
-    // isomorphic-fetch adds `fetch` as a global
-    // eslint-disable-next-line no-undef
-    return fetch(this._buildUrl())
-      .then((response) => {
-        if (response.status !== 200) {
-          throw new ExchangeRatesError(
-            `API returned a bad response (HTTP ${response.status})`
-          );
-        }
-        return response.json();
-      })
-      .then((data) => {
-        const keys = Object.keys(data.rates);
-        return keys.length === 1 ? data.rates[keys[0]] : data.rates;
-      })
-      .catch((err) => {
+      if (response.status !== 200) {
         throw new ExchangeRatesError(
-          `Couldn't fetch the exchange rate, ${err.message}`
+          `API returned a bad response (HTTP ${response.status})`
         );
-      });
+      }
+
+      const data = await response.json();
+      const keys = Object.keys(data.rates);
+      return keys.length === 1 ? data.rates[keys[0]] : data.rates;
+    } catch (err) {
+      console.log(err);
+      throw new ExchangeRatesError(
+        `Couldn't fetch the exchange rate, ${err.message}`
+      );
+    }
   }
 
-  /**
-   * Return the average value of each exchange rate for the selected time period
-   * To select a time period, create a chain with `.from()` and `.to()` before `.avg()`
-   *
-   * @param {?number} decimalPlaces       If set, it limits the number of decimal places
-   * @return {Promise<object|number>}     A Promise that when resolved, returns either an
-   *                                      object containing the average value of each rate
-   *                                      for the selected time period, or a number if
-   *                                      a single date was selected
-   */
-  avg(decimalPlaces = null) {
-    if (decimalPlaces !== null && !Number.isInteger(decimalPlaces)) {
+  async avg(decimalPlaces = null) {
+    if (
+      decimalPlaces !== null &&
+      (!Number.isInteger(decimalPlaces) || decimalPlaces < 0)
+    ) {
       throw new ExchangeRatesError(
-        "The decimal places parameter has to be an integer"
+        "The decimal places parameter has to be a non-negative integer"
       );
     }
 
-    if (decimalPlaces !== null && decimalPlaces < 0) {
-      throw new ExchangeRatesError("Decimal places cannot be negative");
-    }
+    const rates = await this.fetch();
 
-    return this.fetch().then((rates) => {
-      if (!this._isHistoryRequest()) return rates;
+    if (!this._isHistoryRequest()) return rates;
 
-      const mergedObj = {};
-      Object.values(rates).forEach((obj) => {
-        Object.keys(obj).forEach((key) => {
-          mergedObj[key] = mergedObj[key] || [];
-          mergedObj[key].push(obj[key]);
-        });
+    const mergedObj = {};
+    Object.values(rates).forEach((obj) => {
+      Object.keys(obj).forEach((key) => {
+        mergedObj[key] = mergedObj[key] || [];
+        mergedObj[key].push(obj[key]);
       });
-
-      const avgRates = {};
-      const keys = Object.keys(mergedObj);
-      keys.forEach((key) => {
-        const avgRate =
-          mergedObj[key].reduce((p, c) => p + c, 0) / mergedObj[key].length;
-        avgRates[key] =
-          decimalPlaces === null ? avgRate : +avgRate.toFixed(decimalPlaces);
-      });
-
-      return keys.length === 1 ? avgRates[keys[0]] : avgRates;
     });
+
+    const avgRates = {};
+    const keys = Object.keys(mergedObj);
+    keys.forEach((key) => {
+      const avgRate =
+        mergedObj[key].reduce((p, c) => p + c, 0) / mergedObj[key].length;
+      avgRates[key] =
+        decimalPlaces === null ? avgRate : +avgRate.toFixed(decimalPlaces);
+    });
+
+    return keys.length === 1 ? avgRates[keys[0]] : avgRates;
   }
 }
 
